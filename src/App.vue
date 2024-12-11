@@ -1,76 +1,68 @@
-// In App.vue
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue';
+import { WebSocketManager } from './WebSocketManager';
 import IdleDisplay from './components/displays/IdleDisplay.vue';
 import CaptureDisplay from './components/displays/CaptureDisplay.vue';
 import TransformDisplay from './components/displays/TransformDisplay.vue';
 import ReviewDisplay from './components/displays/ReviewDisplay.vue';
 
+const MESSAGE_TYPES = {
+  DISPLAY_UPDATE: 'DISPLAY_UPDATE',
+  START_CAPTURE: 'START_CAPTURE',
+  RETAKE_CAPTURE: 'RETAKE_CAPTURE',
+  START_TRANSFORM: 'START_TRANSFORM',
+  SHOW_REVIEW: 'SHOW_REVIEW'
+};
+
 const currentDisplay = ref('idle');
 const captureDisplay = ref(null);
-const ws = ref(null);
-
+const wsManager = ref(null);
 
 onMounted(() => {
-  console.log('🚀 App.vue mounted');
-  ws.value = new WebSocket('ws://localhost:5080');
-
-  ws.value.onopen = () => {
-    console.log('🤖 Robot UI Connected!');
-  };
-
-  ws.value.onmessage = (event) => {
-    console.log('📨 Raw message received:', event.data);
-    try {
-      const data = JSON.parse(event.data);
-      console.log('📨 Parsed message:', data);
-
-      switch (data.type) {
-        case 'DISPLAY_UPDATE':
-          currentDisplay.value = data.payload.display;
-          break;
-        case 'START_CAPTURE':
-          currentDisplay.value = 'capture';
-          break;
-        case 'RETAKE_CAPTURE':
-          if (captureDisplay.value) {
-            captureDisplay.value.startCapture();
-          }
-          break;
-        case 'START_TRANSFORM':
-          currentDisplay.value = 'transform';
-          break;
-        case 'SHOW_REVIEW':
-          currentDisplay.value = 'review';
-          break;
-      }
-    } catch (error) {
-      console.error('Error processing message:', error);
-      console.error('Raw message that caused error:', event.data);
+  wsManager.value = new WebSocketManager('ws://localhost:5080');
+  console.log('WebSocketManager created');
+  
+  // Register message handlers
+  wsManager.value.registerHandler(MESSAGE_TYPES.DISPLAY_UPDATE, (payload) => {
+    currentDisplay.value = payload.display;
+  });
+  
+  wsManager.value.registerHandler(MESSAGE_TYPES.START_CAPTURE, () => {
+    currentDisplay.value = 'capture';
+  });
+  
+  wsManager.value.registerHandler(MESSAGE_TYPES.RETAKE_CAPTURE, () => {
+    if (captureDisplay.value) {
+      captureDisplay.value.startCapture();
     }
-  };
+  });
+  
+  wsManager.value.registerHandler(MESSAGE_TYPES.START_TRANSFORM, () => {
+    currentDisplay.value = 'transform';
+  });
+  
+  wsManager.value.registerHandler(MESSAGE_TYPES.SHOW_REVIEW, () => {
+    currentDisplay.value = 'review';
+  });
 
-  window.ws = ws.value;
+  wsManager.value.connect();
 });
 
 onUnmounted(() => {
-  if (ws.value) {
-    ws.value.close();
+  if (wsManager.value) {
+    wsManager.value.close();
   }
 });
 </script>
 
 <template>
   <div>
-    <IdleDisplay v-if="currentDisplay === 'idle'" />
-    <CaptureDisplay
-      v-if="currentDisplay === 'capture'"
+    <component 
+      :is="currentDisplay === 'idle' ? IdleDisplay :
+           currentDisplay === 'capture' ? CaptureDisplay :
+           currentDisplay === 'transform' ? TransformDisplay :
+           currentDisplay === 'review' ? ReviewDisplay : null"
       ref="captureDisplay"
     />
-    <TransformDisplay
-      v-if="currentDisplay === 'transform'" />
   </div>
-    <ReviewDisplay
-      v-if="currentDisplay === 'review'"
-    />
 </template>

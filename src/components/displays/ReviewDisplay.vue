@@ -14,7 +14,7 @@ const imageUrl = computed(() => {
 
 onMounted(() => {
   // When the component mounts, we'll get the stored image and create a URL for it
-  const storedImage = imageStore.getTempImage;
+  //const storedImage = imageStore.getTempImage;
   if (storedImage) {
     // Create a URL that we can use in our img elements
     imageUrl.value = URL.createObjectURL(storedImage);
@@ -41,7 +41,5 @@ onMounted(() => {
         class="max-h-full w-auto rounded-2xl shadow-lg object-contain"
       />
     </div>
-
-
   </div>
 </template>
