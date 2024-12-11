@@ -1,14 +1,14 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue';
 import { useIntervalFn } from '@vueuse/core';
+import { useImageStore } from '../../store/imageStore';
 
-// Refs - declare these first since they're used in functions
 const video = ref(null);
 const capturedImageUrl = ref(null);
 const count = ref(6);
 const isInitializing = ref(true);
+const imageStore = useImageStore();
 
-// Constants
 const CAMERA_CONFIG = {
   width: 500,
   height: 500,
@@ -20,7 +20,6 @@ const CAMERA_CONFIG = {
   }
 };
 
-// Function declarations
 function snapshotImage(src) {
   const canvas = new OffscreenCanvas(CAMERA_CONFIG.width, CAMERA_CONFIG.height);
   const context = canvas.getContext('2d');
@@ -50,13 +49,16 @@ async function takePhoto() {
     const photo = snapshotImage(_video);
     const blob = await photo.convertToBlob({ type: 'image/png' });
     capturedImageUrl.value = URL.createObjectURL(blob);
-    console.log('Photo taken successfully');
+    
+    // Store in Pinia first
+    imageStore.setTempImage(blob);
+    
+    console.log('Photo captured and stored in Pinia');
   } catch (error) {
     console.error('Photo capture error:', error);
   }
 }
 
-// Initialize camera
 const initCamera = async () => {
   console.log('Initializing robot camera');
   try {
@@ -77,7 +79,6 @@ const initCamera = async () => {
   }
 };
 
-// Countdown setup
 const countdown = useIntervalFn(() => {
   if (count.value === 0) {
     takePhoto();
@@ -91,15 +92,15 @@ function startCapture() {
     URL.revokeObjectURL(capturedImageUrl.value);
   }
   capturedImageUrl.value = null;
+  imageStore.clearTempImage();
   count.value = CAMERA_CONFIG.countdownStart;
   countdown.resume();
 }
 
-// Expose component methods
 defineExpose({ startCapture });
 
-// Lifecycle hooks
 onMounted(async () => {
+  console.log('Robot CaptureDisplay mounted');
   await initCamera();
 });
 
