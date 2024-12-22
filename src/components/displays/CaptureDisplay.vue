@@ -1,13 +1,14 @@
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, onMounted, onUnmounted, inject } from 'vue';
 import { useIntervalFn } from '@vueuse/core';
-import { useImageStore } from '../../store/imageStore';
-
+import { useImageStore } from '../../stores/imageStore';
+import { useWebsocket } from '../../service/websocket';
 const video = ref(null);
 const capturedImageUrl = ref(null);
 const count = ref(6);
 const isInitializing = ref(true);
 const imageStore = useImageStore();
+const { sendMessage } = useWebsocket()
 
 const CAMERA_CONFIG = {
   width: 500,
@@ -21,7 +22,9 @@ const CAMERA_CONFIG = {
 };
 
 function snapshotImage(src) {
-  const canvas = new OffscreenCanvas(CAMERA_CONFIG.width, CAMERA_CONFIG.height);
+  const canvas = document.createElement('canvas');
+  canvas.width = CAMERA_CONFIG.width;
+  canvas.height = CAMERA_CONFIG.height; 
   const context = canvas.getContext('2d');
 
   const scale = Math.max(
@@ -47,13 +50,13 @@ async function takePhoto() {
 
   try {
     const photo = snapshotImage(_video);
-    const blob = await photo.convertToBlob({ type: 'image/png' });
-    capturedImageUrl.value = URL.createObjectURL(blob);
+    const blob = await new Promise(resolve => {
+    photo.toBlob(resolve, 'image/png');
+});    capturedImageUrl.value = URL.createObjectURL(blob);
     
     // Store in Pinia first
     imageStore.setTempImage(blob);
-    
-    console.log('Photo captured and stored in Pinia');
+
   } catch (error) {
     console.error('Photo capture error:', error);
   }
@@ -64,16 +67,16 @@ const initCamera = async () => {
   try {
     const stream = await navigator.mediaDevices.getUserMedia({
       video: CAMERA_CONFIG.videoConstraints,
-      audio: false,
+      audio: false
     });
-
     if (video.value) {
-      video.value.srcObject = stream;
-      if (isInitializing.value) {
+    video.value.srcObject = stream;
+    await video.value.play();
+    if (isInitializing.value) {
         isInitializing.value = false;
         startCapture();
-      }
     }
+}
   } catch (error) {
     console.error('Robot camera start error:', error);
   }
@@ -85,6 +88,10 @@ const countdown = useIntervalFn(() => {
     return countdown.pause();
   }
   count.value--;
+  sendMessage('COUNTER_UPDATE', { 
+        count: count.value,
+        isComplete: count.value === 0 
+    })
 }, 1000);
 
 function startCapture() {
@@ -102,11 +109,16 @@ defineExpose({ startCapture });
 onMounted(async () => {
   console.log('Robot CaptureDisplay mounted');
   await initCamera();
+  if (wsManager) {
+  wsManager.send('READY', {
+        status: 'ready',
+  });
+  }
 });
 
 onUnmounted(() => {
   console.log('Robot CaptureDisplay unmounting');
-  if (video.value?.srcObject) {
+  if (video.value && video.value.srcObject) {
     const stream = video.value.srcObject;
     stream.getTracks().forEach(track => track.stop());
     video.value.srcObject = null;

@@ -1,6 +1,7 @@
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, onMounted, onUnmounted, inject } from 'vue';
 import QRCode from 'qrcode';
+import { useSession } from '../../stores/sessionStore'
 
 // Configuration
 const CONFIG = {
@@ -25,10 +26,10 @@ const CONFIG = {
 const qrCodeSvg = ref('');
 const isQRCodeLoading = ref(true);
 const error = ref(null);
+const session = useSession();
+const wsManager = inject('wsManager')
 
-function generateSessionId() {
-  return `session-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-}
+
 
 function getServerIP() {
   return window.location.hostname === 'localhost'
@@ -37,9 +38,13 @@ function getServerIP() {
 }
 
 async function generateQRCode() {
-  const sessionId = generateSessionId();
+  session.create()
+  const sessionId = session.data.value.id
+
+  console.log(session.data.value.id);
+  
   const robotIP = getServerIP();
-  const mobileAppUrl = `http://145.93.145.185:5173/?session=${sessionId}&robotIp=${robotIP}`;
+  const mobileAppUrl = `http://145.93.145.185:5173/?session=${sessionId}`;
 
   try {
     isQRCodeLoading.value = true;
@@ -73,9 +78,15 @@ async function generateQRCode() {
 
 let qrCodeRefreshInterval;
 
-onMounted(() => {
+onMounted(async () => {
   generateQRCode();
   qrCodeRefreshInterval = setInterval(generateQRCode, 5 * 60 * 1000); // Refresh every 5 minutes
+  try {
+    await wsManager.send()
+  } catch (error) {
+    console.error('Failed to send initial message', error)
+  }
+
 });
 
 onUnmounted(() => {

@@ -1,57 +1,51 @@
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue';
-import { WebSocketManager } from './WebSocketManager';
+import { ref, onMounted, onUnmounted, provide } from 'vue';
 import IdleDisplay from './components/displays/IdleDisplay.vue';
 import CaptureDisplay from './components/displays/CaptureDisplay.vue';
 import TransformDisplay from './components/displays/TransformDisplay.vue';
 import ReviewDisplay from './components/displays/ReviewDisplay.vue';
-
-const MESSAGE_TYPES = {
-  DISPLAY_UPDATE: 'DISPLAY_UPDATE',
-  START_CAPTURE: 'START_CAPTURE',
-  RETAKE_CAPTURE: 'RETAKE_CAPTURE',
-  START_TRANSFORM: 'START_TRANSFORM',
-  SHOW_REVIEW: 'SHOW_REVIEW'
-};
+import { useWebsocket } from './service/websocket';
 
 const currentDisplay = ref('idle');
-const captureDisplay = ref(null);
-const wsManager = ref(null);
+const ws = ref(null);
+const currentComponentRef = ref(null);
+const {setupWebsocket} = useWebsocket();
 
-onMounted(() => {
-  wsManager.value = new WebSocketManager('ws://localhost:5080');
-  console.log('WebSocketManager created');
-  
-  // Register message handlers
-  wsManager.value.registerHandler(MESSAGE_TYPES.DISPLAY_UPDATE, (payload) => {
-    currentDisplay.value = payload.display;
-  });
-  
-  wsManager.value.registerHandler(MESSAGE_TYPES.START_CAPTURE, () => {
-    currentDisplay.value = 'capture';
-  });
-  
-  wsManager.value.registerHandler(MESSAGE_TYPES.RETAKE_CAPTURE, () => {
-    if (captureDisplay.value) {
-      captureDisplay.value.startCapture();
-    }
-  });
-  
-  wsManager.value.registerHandler(MESSAGE_TYPES.START_TRANSFORM, () => {
-    currentDisplay.value = 'transform';
-  });
-  
-  wsManager.value.registerHandler(MESSAGE_TYPES.SHOW_REVIEW, () => {
-    currentDisplay.value = 'review';
-  });
-
-  wsManager.value.connect();
+onMounted(async () => {
+  await setupWebsocket()
 });
 
+onMounted(() => {
+  ws.value = new WebSocket('ws://localhost:5080');
+  console.log('WebSocketManager created');
+
+  // Connection opened
+  ws.value.onopen = () => {
+        console.log('Connected to robot server');
+    };
+
+     // Listen for messages
+     ws.value.onmessage = (event) => {
+        try {
+            const data = JSON.parse(event.data);
+            console.log('Message received:', data);  
+            // Update display based on received message
+            if (data.type == 'DISPLAY_UPDATE') {
+                currentDisplay.value = data.payload.display;
+            } else if (data.type == 'RETAKE') {
+              currentComponentRef.value.startCapture()
+            }
+        } catch (error) {
+            console.error('Error processing message:', error);
+        }
+    };
+});
+
+// Cleanup
 onUnmounted(() => {
-  if (wsManager.value) {
-    wsManager.value.close();
-  }
+    if (ws.value) {
+        ws.value.close();
+    }
 });
 </script>
 
@@ -62,7 +56,7 @@ onUnmounted(() => {
            currentDisplay === 'capture' ? CaptureDisplay :
            currentDisplay === 'transform' ? TransformDisplay :
            currentDisplay === 'review' ? ReviewDisplay : null"
-      ref="captureDisplay"
+      ref="currentComponentRef"
     />
   </div>
 </template>
