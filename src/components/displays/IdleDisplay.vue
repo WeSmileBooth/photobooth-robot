@@ -27,15 +27,9 @@ const qrCodeSvg = ref('');
 const isQRCodeLoading = ref(true);
 const error = ref(null);
 const session = useSession();
-const wsManager = inject('wsManager')
 
 
 
-function getServerIP() {
-  return window.location.hostname === 'localhost'
-    ? '10.10.10.133'
-    : window.location.hostname;
-}
 
 async function generateQRCode() {
   session.create()
@@ -43,8 +37,11 @@ async function generateQRCode() {
 
   console.log(session.data.value.id);
   
-  const robotIP = getServerIP();
-  const mobileAppUrl = `http://145.93.145.185:5173/?session=${sessionId}`;
+  const response = await fetch('/server');
+  const ngrokUrl = await response.text(); 
+
+  console.log('App.vue. ngrokUrl',ngrokUrl);
+  const mobileAppUrl = `http://10.10.10.133:5173/?session=${sessionId}&ngrok=${ngrokUrl}`;
 
   try {
     isQRCodeLoading.value = true;
@@ -81,11 +78,6 @@ let qrCodeRefreshInterval;
 onMounted(async () => {
   generateQRCode();
   qrCodeRefreshInterval = setInterval(generateQRCode, 5 * 60 * 1000); // Refresh every 5 minutes
-  try {
-    await wsManager.send()
-  } catch (error) {
-    console.error('Failed to send initial message', error)
-  }
 
 });
 

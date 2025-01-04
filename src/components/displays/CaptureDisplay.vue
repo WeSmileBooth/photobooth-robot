@@ -109,11 +109,6 @@ defineExpose({ startCapture });
 onMounted(async () => {
   console.log('Robot CaptureDisplay mounted');
   await initCamera();
-  if (wsManager) {
-  wsManager.send('READY', {
-        status: 'ready',
-  });
-  }
 });
 
 onUnmounted(() => {
