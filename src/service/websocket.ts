@@ -21,12 +21,10 @@ export function useWebsocket() {
 
       const response = await fetch("/server");
       const url = await response.text();
-      console.log("websocket.ts. Server URL:", url);
 
       ws.value = new WebSocket(url);
 
       ws.value.onopen = () => {
-        console.log("Connected to server");
         isConnected.value = true;
         resolve(true);
       };

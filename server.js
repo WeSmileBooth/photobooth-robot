@@ -44,6 +44,7 @@ wss.on("connection", (ws) => {
   ws.on("message", (message) => {
     try {
       const data = JSON.parse(message);
+      console.log("Received:", data);
       broadcast(data);
     } catch (error) {
       console.error("Error processing message:", error);
