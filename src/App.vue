@@ -14,6 +14,7 @@ const {setupWebsocket, addMessageHandler} = useWebsocket();
 onMounted(async () => {
   await setupWebsocket()
 
+  //Change the display based on the message received
   addMessageHandler((data) => {
         if (data.type === 'DISPLAY_UPDATE') {
             currentDisplay.value = data.payload.display;
@@ -22,32 +23,6 @@ onMounted(async () => {
         }
     });
 });
-
-// onMounted(() => {
-//   ws.value = new WebSocket('ws://localhost:5080');
-//   console.log('WebSocketManager created');
-
-//   // Connection opened
-//   ws.value.onopen = () => {
-//         console.log('Connected to robot server');
-//     };
-
-//      // Listen for messages
-//      ws.value.onmessage = (event) => {
-//         try {
-//             const data = JSON.parse(event.data);
-//             console.log('Message received:', data);  
-//             // Update display based on received message
-//             if (data.type == 'DISPLAY_UPDATE') {
-//                 currentDisplay.value = data.payload.display;
-//             } else if (data.type == 'RETAKE') {
-//               currentComponentRef.value.startCapture()
-//             }
-//         } catch (error) {
-//             console.error('Error processing message:', error);
-//         }
-//     };
-// });
 
 // Cleanup
 onUnmounted(() => {

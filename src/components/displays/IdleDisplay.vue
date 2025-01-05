@@ -40,7 +40,7 @@ async function generateQRCode() {
   const response = await fetch('/server');
   const ngrokUrl = await response.text(); 
 
-  console.log('App.vue. ngrokUrl',ngrokUrl);
+  //Depending on the url will be different
   const mobileAppUrl = `http://10.10.10.133:5173/?session=${sessionId}&ngrok=${ngrokUrl}`;
 
   try {
