@@ -1,0 +1,14 @@
+# docker-compose.yml
+version: '3.8'
+services:
+  app:
+    build: .
+    ports:
+      - "5080:5080"
+    environment:
+      - NODE_ENV=production
+      - NGROK_AUTHTOKEN=2ZUVTOVHYlmmcpff6KHArWo5evi_85PZqytQeRmJo6dvXnDhK
+    # Optional: Add volume mounts if you need hot reloading during development
+    # volumes:
+    #   - .:/app
+    #   - /app/node_modules
