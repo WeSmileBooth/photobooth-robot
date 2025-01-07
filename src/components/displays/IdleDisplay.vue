@@ -124,7 +124,7 @@ onUnmounted(() => {
         class="bg-white p-4 sm:p-6 md:p-8 lg:p-12 rounded-xl sm:rounded-2xl lg:rounded-3xl shadow-lg transform transition-all hover:shadow-xl"
       >
         <div
-          class="w-32 h-32 sm:w-40 sm:h-40 md:w-48 md:h-48 lg:w-64 lg:h-64 flex items-center justify-center"
+          class="w-32 h-32 sm:w-40 sm:h-40 md:w-48 md:h-48 lg:w-64 lg:h-64 flex items-center justify-center mx-auto"
           v-html="qrCodeSvg"
         ></div>
         <p
