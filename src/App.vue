@@ -2,17 +2,21 @@
 import { ref, onMounted, onUnmounted, provide } from 'vue';
 import IdleDisplay from './components/displays/IdleDisplay.vue';
 import CaptureDisplay from './components/displays/CaptureDisplay.vue';
+import QuizDisplay from './components/displays/QuizDisplay.vue';
 import TransformDisplay from './components/displays/TransformDisplay.vue';
 import ReviewDisplay from './components/displays/ReviewDisplay.vue';
 import { useWebsocket } from './service/websocket';
 import { useSession } from './stores/sessionStore';
+import { usePromptStore } from './stores/promptStore';
 import { toast, Toaster } from 'vue-sonner'
+
 
 const currentDisplay = ref('idle');
 const ws = ref(null);
 const currentComponentRef = ref(null);
 const { setupWebsocket, addMessageHandler, sendMessage } = useWebsocket();
 const session = useSession();
+const promptStore = usePromptStore();
 
 onMounted(async () => {
   await setupWebsocket()
@@ -42,7 +46,11 @@ onMounted(async () => {
 
       console.log('⚠️ Cannot connect: Active session in progress:', session.data.value.id);
 
+    } else if (data.type === 'PROMPT_UPDATE') {
+      promptStore.setPrompt(data.payload.prompt);
+      console.log('Prompt updated:', promptStore.data.value);
     }
+
   });
 });
 
@@ -58,8 +66,9 @@ onUnmounted(() => {
   <div>
     <component :is="currentDisplay === 'idle' ? IdleDisplay :
       currentDisplay === 'capture' ? CaptureDisplay :
-        currentDisplay === 'transform' ? TransformDisplay :
-          currentDisplay === 'review' ? ReviewDisplay : null" ref="currentComponentRef" />
+        currentDisplay === 'quiz' ? QuizDisplay :
+          currentDisplay === 'transform' ? TransformDisplay :
+            currentDisplay === 'review' ? ReviewDisplay : null" ref="currentComponentRef" />
     <Toaster position="top-right" />
 
   </div>

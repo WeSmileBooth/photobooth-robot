@@ -21,7 +21,6 @@ const server = app.listen(PORT, HOST, async () => {
 
   const listener = await ngrok.forward({
     addr: PORT,
-    // TODO: use env variable here
     authtoken: authtoken,
     proto: "http",
   });
