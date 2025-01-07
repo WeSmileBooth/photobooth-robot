@@ -1,6 +1,11 @@
 import express from "express";
 import { WebSocketServer } from "ws";
 import * as ngrok from "@ngrok/ngrok";
+import dotenv from "dotenv";
+dotenv.config();
+
+// Then use the env variable
+const authtoken = process.env.NGROK_AUTHTOKEN;
 
 const PORT = 5080;
 const HOST = "0.0.0.0";
@@ -16,7 +21,8 @@ const server = app.listen(PORT, HOST, async () => {
 
   const listener = await ngrok.forward({
     addr: PORT,
-    authtoken: "2ZUVTOVHYlmmcpff6KHArWo5evi_85PZqytQeRmJo6dvXnDhK",
+    // TODO: use env variable here
+    authtoken: authtoken,
     proto: "http",
   });
 

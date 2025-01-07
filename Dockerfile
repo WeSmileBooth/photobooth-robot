@@ -13,6 +13,8 @@ RUN npm install
 # Copy project files
 COPY . .
 
+COPY .env .
+
 # Build the Vue application
 RUN npm run build
 
