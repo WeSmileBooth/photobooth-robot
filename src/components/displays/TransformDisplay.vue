@@ -45,7 +45,7 @@ onMounted(async () => {
             console.log('Processing complete! Image ready for review.');
             processingStatus.value = 'complete';
 
-            sendMessage('GENERATION_COMPLETE', {
+            await sendMessage('GENERATION_COMPLETE', {
                 originalImageUrl: imageStore.originalImageUrl,
                 transformedImageUrl: imageStore.transformedImageUrl
             })
