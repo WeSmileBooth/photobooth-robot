@@ -63,7 +63,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div>
+  <div class="fixed inset-0 w-full h-full">
     <component :is="currentDisplay === 'idle' ? IdleDisplay :
       currentDisplay === 'capture' ? CaptureDisplay :
         currentDisplay === 'quiz' ? QuizDisplay :

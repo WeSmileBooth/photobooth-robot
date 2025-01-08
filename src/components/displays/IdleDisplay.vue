@@ -89,51 +89,46 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div
-    class="min-h-screen w-full bg-gradient-to-b from-blue-50 to-white flex flex-col justify-between p-4 sm:p-6 md:p-8 lg:p-16">
+  <div class="absolute inset-0 bg-gradient-to-b from-blue-50 to-white flex flex-col">
     <!-- Header Section -->
-    <header class="text-center mb-6 sm:mb-8 md:mb-12 lg:mb-16">
-      <h1 class="text-4xl sm:text-5xl md:text-6xl lg:text-8xl font-bold text-gray-800 mb-2 sm:mb-3 md:mb-4">
+    <header class="text-center pt-12 md:pt-16">
+      <h1 class="text-5xl md:text-7xl font-bold text-gray-800 mb-4">
         {{ CONFIG.title }}
       </h1>
-      <p class="text-xl sm:text-2xl md:text-3xl lg:text-4xl text-gray-600">
+      <p class="text-2xl md:text-4xl text-gray-600">
         {{ CONFIG.subtitle }}
       </p>
     </header>
 
     <!-- Main Content Section -->
-    <main
-      class="flex-grow flex flex-col items-center justify-center space-y-6 sm:space-y-8 md:space-y-12 lg:space-y-16">
+    <main class="flex-1 flex flex-col items-center justify-center gap-16 md:gap-20 px-8">
       <!-- QR Code Section -->
-      <div v-if="isQRCodeLoading"
-        class="animate-pulse w-32 h-32 sm:w-40 sm:h-40 md:w-48 md:h-48 lg:w-64 lg:h-64 bg-gray-300 rounded-lg"></div>
-      <div v-else-if="error" class="text-red-500 text-base sm:text-lg md:text-xl lg:text-2xl text-center">
+      <div v-if="isQRCodeLoading" class="animate-pulse w-64 md:w-96 h-64 md:h-96 bg-gray-300 rounded-lg">
+      </div>
+      <div v-else-if="error" class="text-red-500 text-2xl md:text-3xl text-center">
         {{ error }}
       </div>
-      <div v-else
-        class="bg-white p-4 sm:p-6 md:p-8 lg:p-12 rounded-xl sm:rounded-2xl lg:rounded-3xl shadow-lg transform transition-all hover:shadow-xl">
-        <div class="w-32 h-32 sm:w-40 sm:h-40 md:w-48 md:h-48 lg:w-64 lg:h-64 flex items-center justify-center mx-auto"
-          v-html="qrCodeSvg"></div>
-        <p
-          class="text-center mt-2 sm:mt-3 md:mt-4 lg:mt-6 text-gray-700 text-lg sm:text-xl md:text-2xl lg:text-3xl font-medium">
+      <div v-else class="bg-white p-10 md:p-12 rounded-2xl shadow-lg hover:shadow-xl transition-shadow">
+        <div class="w-64 md:w-96 h-64 md:h-96 flex items-center justify-center" v-html="qrCodeSvg">
+        </div>
+        <p class="text-center mt-8 text-gray-700 text-2xl md:text-3xl font-medium">
           Scan to begin your experience
         </p>
       </div>
 
       <!-- Instructions Section -->
-      <div class="w-full max-w-xl sm:max-w-2xl md:max-w-3xl lg:max-w-4xl">
-        <div class="bg-white rounded-xl sm:rounded-2xl lg:rounded-3xl shadow-md p-4 sm:p-6 md:p-8 lg:p-12">
-          <h2 class="text-2xl sm:text-3xl md:text-3xl lg:text-4xl font-semibold text-gray-800 mb-4 sm:mb-6 md:mb-8">
+      <div class="w-full max-w-4xl md:max-w-5xl px-4">
+        <div class="bg-white rounded-2xl shadow-md p-10 md:p-12">
+          <h2 class="text-4xl md:text-5xl font-semibold text-gray-800 mb-10">
             How it works:
           </h2>
-          <div class="space-y-3 sm:space-y-4 md:space-y-5 lg:space-y-6">
-            <div v-for="(instruction, index) in CONFIG.instructions" :key="index"
-              class="flex items-center space-x-3 sm:space-x-4 md:space-x-6">
+          <div class="space-y-8 md:space-y-10">
+            <div v-for="(instruction, index) in CONFIG.instructions" :key="index" class="flex items-center space-x-8">
               <div
-                class="w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 lg:w-16 lg:h-16 bg-blue-500 text-white rounded-full flex items-center justify-center text-xl sm:text-2xl md:text-3xl font-bold">
+                class="w-16 md:w-20 h-16 md:h-20 bg-blue-500 text-white rounded-full flex items-center justify-center text-3xl md:text-4xl font-bold">
                 {{ index + 1 }}
               </div>
-              <p class="text-gray-700 text-lg sm:text-xl md:text-2xl lg:text-3xl">
+              <p class="flex-1 text-gray-700 text-2xl md:text-3xl text-left">
                 {{ instruction }}
               </p>
             </div>
@@ -142,9 +137,11 @@ onUnmounted(() => {
       </div>
     </main>
 
+
+
     <!-- Footer Section -->
-    <footer class="text-center text-gray-500 mt-6 sm:mt-8 md:mt-12 lg:mt-16">
-      <p class="text-lg sm:text-xl md:text-2xl">
+    <footer class="text-center text-gray-500 py-10 md:py-12">
+      <p class="text-2xl md:text-3xl">
         Waiting for the next artistic masterpiece...
       </p>
     </footer>
