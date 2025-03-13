@@ -2,6 +2,7 @@ import express from "express";
 import { WebSocketServer } from "ws";
 import * as ngrok from "@ngrok/ngrok";
 import dotenv from "dotenv";
+import cors from "cors";
 dotenv.config();
 
 // Then use the env variable
@@ -14,6 +15,9 @@ let serverUrl = "";
 // Setup Express
 const app = express();
 app.use(express.static("dist"));
+
+// Enable CORS for all routes
+app.use(cors());
 
 // Create server
 const server = app.listen(PORT, HOST, async () => {
@@ -33,6 +37,7 @@ const server = app.listen(PORT, HOST, async () => {
 const wss = new WebSocketServer({ server });
 
 app.get("/server", (req, res) => {
+  console.log("recieved request");
   res.send(serverUrl);
 });
 

@@ -1,8 +1,8 @@
 <script setup>
 import { ref, onMounted, onUnmounted, inject } from "vue";
 import { useIntervalFn } from "@vueuse/core";
-import { useImageStore } from "../../stores/imageStore";
-import { useWebsocket } from "../../service/websocket";
+import { useImageStore } from "../stores/imageStore";
+import { useWebsocket } from "../service/websocket";
 const video = ref(null);
 const capturedImageUrl = ref(null);
 const count = ref(6);
@@ -66,6 +66,9 @@ async function takePhoto() {
 const initCamera = async () => {
   console.log("Initializing robot camera");
   try {
+    const permissionStatus = await navigator.permissions.query({
+      name: "camera",
+    });
     console.log(navigator.mediaDevices);
     const stream = await navigator.mediaDevices.getUserMedia({
       video: CAMERA_CONFIG.videoConstraints,

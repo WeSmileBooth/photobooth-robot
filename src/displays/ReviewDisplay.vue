@@ -1,6 +1,6 @@
 <script setup>
-import { onMounted, onUnmounted, ref, computed } from 'vue';
-import { useImageStore } from '../../stores/imageStore';
+import { onMounted, onUnmounted, ref, computed } from "vue";
+import { useImageStore } from "../stores/imageStore";
 
 const imageStore = useImageStore();
 
@@ -12,12 +12,12 @@ const originalImageUrl = computed(() => {
     // Fallback to blob URL if we only have the tempImage
     return window.URL.createObjectURL(imageStore.tempImage);
   }
-  return '/wesmile-logo.png';
+  return "/wesmile-logo.png";
 });
 
 // Compute URL for processed image
 const processedImageUrl = computed(() => {
-  return imageStore.transformedImageUrl || '/wesmile-logo.png';
+  return imageStore.transformedImageUrl || "/wesmile-logo.png";
 });
 
 // Track whether images are loaded
@@ -36,7 +36,7 @@ onMounted(() => {
 
 // Clean up any blob URLs when the component unmounts
 onUnmounted(() => {
-  if (originalImageUrl.value?.startsWith('blob:')) {
+  if (originalImageUrl.value?.startsWith("blob:")) {
     window.URL.revokeObjectURL(originalImageUrl.value);
   }
 });
@@ -55,22 +55,28 @@ const handleProcessedLoad = () => {
   <div class="min-h-screen flex flex-col">
     <!-- Original image -->
     <div class="flex-none h-[45vh] flex items-center justify-center p-4">
-      <img 
+      <img
         :src="originalImageUrl"
-        alt="Original Image" 
+        alt="Original Image"
         class="max-h-full w-auto rounded-2xl shadow-lg object-contain transition-opacity duration-300"
-        :class="{ 'opacity-0': !isOriginalLoaded, 'opacity-100': isOriginalLoaded }"
+        :class="{
+          'opacity-0': !isOriginalLoaded,
+          'opacity-100': isOriginalLoaded,
+        }"
         @load="handleOriginalLoad"
       />
     </div>
 
     <!-- Processed image -->
     <div class="flex-none h-[45vh] flex items-center justify-center p-4">
-      <img 
+      <img
         :src="processedImageUrl"
-        alt="Processed Image" 
+        alt="Processed Image"
         class="max-h-full w-auto rounded-2xl shadow-lg object-contain transition-opacity duration-300"
-        :class="{ 'opacity-0': !isProcessedLoaded, 'opacity-100': isProcessedLoaded }"
+        :class="{
+          'opacity-0': !isProcessedLoaded,
+          'opacity-100': isProcessedLoaded,
+        }"
         @load="handleProcessedLoad"
       />
     </div>

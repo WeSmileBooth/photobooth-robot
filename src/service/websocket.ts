@@ -19,8 +19,10 @@ export function useWebsocket() {
         return;
       }
 
-      const response = await fetch("/server");
+      const response = await fetch(`${import.meta.env.VITE_SERVER_URL}/server`);
       const url = await response.text();
+
+      console.log("url", url);
 
       ws.value = new WebSocket(url);
 

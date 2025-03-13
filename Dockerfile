@@ -21,7 +21,7 @@ RUN npm run build
 # Expose the port
 EXPOSE 5080
 
-ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
+# ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
 
 # Start the server
 CMD ["node", "server.js"]
