@@ -1,62 +1,88 @@
 <script setup>
-import { ref, onMounted, onUnmounted, provide } from 'vue';
-import IdleDisplay from './components/displays/IdleDisplay.vue';
-import CaptureDisplay from './components/displays/CaptureDisplay.vue';
-import TransformDisplay from './components/displays/TransformDisplay.vue';
-import ReviewDisplay from './components/displays/ReviewDisplay.vue';
-import { useWebsocket } from './service/websocket';
+import { ref, onMounted, onUnmounted, provide } from "vue";
+import IdleDisplay from "./displays/IdleDisplay.vue";
+import CaptureDisplay from "./displays/CaptureDisplay.vue";
+import QuizDisplay from "./displays/QuizDisplay.vue";
+import TransformDisplay from "./displays/TransformDisplay.vue";
+import ReviewDisplay from "./displays/ReviewDisplay.vue";
+import { useWebsocket } from "./service/websocket";
+import { useSession } from "./stores/sessionStore";
+import { usePromptStore } from "./stores/promptStore";
+import { toast, Toaster } from "vue-sonner";
 
-const currentDisplay = ref('idle');
+const currentDisplay = ref("idle");
 const ws = ref(null);
 const currentComponentRef = ref(null);
-const {setupWebsocket} = useWebsocket();
+const { setupWebsocket, addMessageHandler } = useWebsocket();
+const session = useSession();
+const promptStore = usePromptStore();
 
 onMounted(async () => {
-  await setupWebsocket()
-});
+  await setupWebsocket();
 
-onMounted(() => {
-  ws.value = new WebSocket('ws://localhost:5080');
-  console.log('WebSocketManager created');
+  //Change the display based on the message received
+  addMessageHandler((data) => {
+    if (data.type === "DISPLAY_UPDATE") {
+      currentDisplay.value = data.payload.display;
+    } else if (data.type === "RETAKE") {
+      currentComponentRef.value.startCapture();
+    } else if (data.type === "MOBILE_CONNECTED") {
+      const sessionId = data.payload.id;
 
-  // Connection opened
-  ws.value.onopen = () => {
-        console.log('Connected to robot server');
-    };
+      // If no active session, create one
+      if (!session.data.value) {
+        session.create();
+        console.log(
+          "📱 New mobile connected, created session:",
+          session.data.value.id
+        );
+        return;
+      }
 
-     // Listen for messages
-     ws.value.onmessage = (event) => {
-        try {
-            const data = JSON.parse(event.data);
-            console.log('Message received:', data);  
-            // Update display based on received message
-            if (data.type == 'DISPLAY_UPDATE') {
-                currentDisplay.value = data.payload.display;
-            } else if (data.type == 'RETAKE') {
-              currentComponentRef.value.startCapture()
-            }
-        } catch (error) {
-            console.error('Error processing message:', error);
-        }
-    };
+      // If session exists, check if it's the same session reconnecting
+      if (session.data.value.id === sessionId) {
+        console.log("📱 Mobile reconnected to session:", sessionId);
+        toast.success(`📱 Mobile connected to session: ${sessionId}`);
+        return;
+      }
+
+      console.log(
+        "⚠️ Cannot connect: Active session in progress:",
+        session.data.value.id
+      );
+    } else if (data.type === "PROMPT_UPDATE") {
+      promptStore.setPrompt(data.payload.prompt);
+      console.log("Prompt updated:", promptStore.data.value);
+    }
+  });
 });
 
 // Cleanup
 onUnmounted(() => {
-    if (ws.value) {
-        ws.value.close();
-    }
+  if (ws.value) {
+    ws.value.close();
+  }
 });
 </script>
 
 <template>
-  <div>
-    <component 
-      :is="currentDisplay === 'idle' ? IdleDisplay :
-           currentDisplay === 'capture' ? CaptureDisplay :
-           currentDisplay === 'transform' ? TransformDisplay :
-           currentDisplay === 'review' ? ReviewDisplay : null"
+  <div class="fixed inset-0 w-full h-full">
+    <component
+      :is="
+        currentDisplay === 'idle'
+          ? IdleDisplay
+          : currentDisplay === 'capture'
+          ? CaptureDisplay
+          : currentDisplay === 'quiz'
+          ? QuizDisplay
+          : currentDisplay === 'transform'
+          ? TransformDisplay
+          : currentDisplay === 'review'
+          ? ReviewDisplay
+          : null
+      "
       ref="currentComponentRef"
     />
+    <Toaster position="top-right" />
   </div>
 </template>

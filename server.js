@@ -1,69 +1,63 @@
-import express from 'express';
-import { WebSocketServer } from 'ws';
-import * as ngrok from '@ngrok/ngrok';
-import dotenv from 'dotenv';
-
-
-const PORT = 5080;
-const HOST = '0.0.0.0';
-
+import express from "express";
+import { WebSocketServer } from "ws";
+import * as ngrok from "@ngrok/ngrok";
+import dotenv from "dotenv";
+import cors from "cors";
 dotenv.config();
 
+// Then use the env variable
+const authtoken = process.env.NGROK_AUTHTOKEN;
+
+const PORT = 5080;
+const HOST = "0.0.0.0";
+let serverUrl = "";
 
 // Setup Express
 const app = express();
-app.use(express.static('dist'));
+app.use(express.static("dist"));
+
+// Enable CORS for all routes
+app.use(cors());
 
 // Create server
-const server = app.listen(PORT, HOST, () => {
-    console.log(`🤖 Server running on http://${HOST}:${PORT}`);
-   // console.log('🤖 for outside access ws://145.93.145.95:5080')
+const server = app.listen(PORT, HOST, async () => {
+  console.log(`🤖 Server running on http://${HOST}:${PORT}`);
+
+  const listener = await ngrok.forward({
+    addr: PORT,
+    authtoken: authtoken,
+    proto: "http",
+  });
+
+  serverUrl = listener.url().replace("https:", "wss:");
+
+  console.log(`🚀 Ngrok tunnel created: ${listener.url()}`);
 });
 
 const wss = new WebSocketServer({ server });
 
-async function setupNgrokTunnel() {
-    try {
-        const listener = await ngrok.connect({
-            addr: PORT,
-            authtoken: process.env.NGROK_AUTHTOKEN
-        });
-        const publicUrl = listener.url();
-        console.log(`🌍 Ngrok tunnel established at: ${publicUrl}`);
-        app.set('ngrokUrl', publicUrl);  // Store for use in QR code generation
-        return publicUrl;
-    } catch (error) {
-        console.error('Failed to establish ngrok tunnel:', error);
-        console.log('💡 Tip: Make sure NGROK_AUTHTOKEN is set in your environment');
-        return null;
-    }
-}
-
-setupNgrokTunnel();
-
-
-
+app.get("/server", (req, res) => {
+  console.log("recieved request");
+  res.send(serverUrl);
+});
 
 // Broadcasting function
 function broadcast(message) {
-    wss.clients.forEach(client => {
-        client.send(JSON.stringify(message));
-    });
+  wss.clients.forEach((client) => {
+    client.send(JSON.stringify(message));
+  });
 }
 
 // Handle connections
-wss.on('connection', (ws) => {
-    console.log('Client connected!');
-    
-    // When receiving any message, broadcasting it to all clients
-    ws.on('message', (message) => {
-        try {
-            const data = JSON.parse(message);
-            console.log('Received:', data);
-            broadcast(data); 
-        } catch (error) {
-            console.error('Error processing message:', error);
-        }
-    });
+wss.on("connection", (ws) => {
+  // When receiving any message, broadcasting it to all clients
+  ws.on("message", (message) => {
+    try {
+      const data = JSON.parse(message);
+      console.log("Received:", data);
+      broadcast(data);
+    } catch (error) {
+      console.error("Error processing message:", error);
+    }
+  });
 });
-

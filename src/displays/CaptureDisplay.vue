@@ -1,14 +1,14 @@
 <script setup>
-import { ref, onMounted, onUnmounted, inject } from 'vue';
-import { useIntervalFn } from '@vueuse/core';
-import { useImageStore } from '../../stores/imageStore';
-import { useWebsocket } from '../../service/websocket';
+import { ref, onMounted, onUnmounted, inject } from "vue";
+import { useIntervalFn } from "@vueuse/core";
+import { useImageStore } from "../stores/imageStore";
+import { useWebsocket } from "../service/websocket";
 const video = ref(null);
 const capturedImageUrl = ref(null);
 const count = ref(6);
 const isInitializing = ref(true);
 const imageStore = useImageStore();
-const { sendMessage } = useWebsocket()
+const { sendMessage } = useWebsocket();
 
 const CAMERA_CONFIG = {
   width: 500,
@@ -17,15 +17,15 @@ const CAMERA_CONFIG = {
   videoConstraints: {
     width: { ideal: 500 },
     height: { ideal: 500 },
-    facingMode: 'environment'
-  }
+    facingMode: "environment",
+  },
 };
 
 function snapshotImage(src) {
-  const canvas = document.createElement('canvas');
+  const canvas = document.createElement("canvas");
   canvas.width = CAMERA_CONFIG.width;
-  canvas.height = CAMERA_CONFIG.height; 
-  const context = canvas.getContext('2d');
+  canvas.height = CAMERA_CONFIG.height;
+  const context = canvas.getContext("2d");
 
   const scale = Math.max(
     CAMERA_CONFIG.width / src.videoWidth,
@@ -44,54 +44,66 @@ function snapshotImage(src) {
 async function takePhoto() {
   const _video = video.value;
   if (!_video) {
-    console.log('No video element found');
+    console.log("No video element found");
     return;
   }
 
   try {
     const photo = snapshotImage(_video);
-    const blob = await new Promise(resolve => {
-    photo.toBlob(resolve, 'image/png');
-});    capturedImageUrl.value = URL.createObjectURL(blob);
-    
+    const blob = await new Promise((resolve) => {
+      photo.toBlob(resolve, "image/png");
+    });
+    capturedImageUrl.value = URL.createObjectURL(blob);
+
     // Store in Pinia first
     imageStore.setTempImage(blob);
-
+    console.log("Image taken");
   } catch (error) {
-    console.error('Photo capture error:', error);
+    console.error("Photo capture error:", error);
   }
 }
 
 const initCamera = async () => {
-  console.log('Initializing robot camera');
+  console.log("Initializing robot camera");
   try {
+    const permissionStatus = await navigator.permissions.query({
+      name: "camera",
+    });
+    console.log(navigator.mediaDevices);
     const stream = await navigator.mediaDevices.getUserMedia({
       video: CAMERA_CONFIG.videoConstraints,
-      audio: false
+      audio: false,
     });
+    console.log(video.value);
     if (video.value) {
-    video.value.srcObject = stream;
-    await video.value.play();
-    if (isInitializing.value) {
+      video.value.srcObject = stream;
+      console.log(stream);
+      await video.value.play();
+      if (isInitializing.value) {
         isInitializing.value = false;
         startCapture();
+      }
     }
-}
   } catch (error) {
-    console.error('Robot camera start error:', error);
+    console.error("Robot camera start error:", error);
   }
 };
 
-const countdown = useIntervalFn(() => {
+const countdown = useIntervalFn(async () => {
   if (count.value === 0) {
-    takePhoto();
+    await takePhoto();
+    console.log("MEssage sent");
+    sendMessage("COUNTER_UPDATE", {
+      count: 0,
+      isComplete: true,
+    });
     return countdown.pause();
   }
   count.value--;
-  sendMessage('COUNTER_UPDATE', { 
-        count: count.value,
-        isComplete: count.value === 0 
-    })
+  sendMessage("COUNTER_UPDATE", {
+    count: count.value,
+    isComplete: false,
+  });
 }, 1000);
 
 function startCapture() {
@@ -107,20 +119,15 @@ function startCapture() {
 defineExpose({ startCapture });
 
 onMounted(async () => {
-  console.log('Robot CaptureDisplay mounted');
+  console.log("Robot CaptureDisplay mounted");
   await initCamera();
-  if (wsManager) {
-  wsManager.send('READY', {
-        status: 'ready',
-  });
-  }
 });
 
 onUnmounted(() => {
-  console.log('Robot CaptureDisplay unmounting');
+  console.log("Robot CaptureDisplay unmounting");
   if (video.value && video.value.srcObject) {
     const stream = video.value.srcObject;
-    stream.getTracks().forEach(track => track.stop());
+    stream.getTracks().forEach((track) => track.stop());
     video.value.srcObject = null;
   }
   if (capturedImageUrl.value) {
